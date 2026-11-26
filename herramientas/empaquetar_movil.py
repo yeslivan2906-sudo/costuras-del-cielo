@@ -10,7 +10,7 @@ fuera = set(l.strip() for l in open(lista) if l.strip() and not l.startswith('#'
 out, antes, despues = {}, 0, 0
 import re
 CAL = int(sys.argv[2]) if len(sys.argv) > 2 else 84
-normal = set(re.findall(r'"([a-z_]+/[^"]+)":"data:', open(os.path.join(ROOT, 'paquete_assets.js')).read()))
+normal = set(re.findall(r'"([a-z0-9_]+/[^"]+)":"data:', open(os.path.join(ROOT, 'paquete_assets.js')).read()))
 for carpeta in sorted(os.listdir(ROOT)):
     d = os.path.join(ROOT, carpeta)
     if not os.path.isdir(d): continue
