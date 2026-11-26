@@ -3000,7 +3000,7 @@ class Game extends Phaser.Scene {
     huecos.forEach(([k, icon], i) => {
       const x = 130 + i * 38 + (4 - huecos.length) * 19, y = 612;   // con 4 huecos, igual que siempre
       // cajitas de fieltro de Yesli: el icono ya va bordado y el número va en la esquina oscura de abajo a la derecha
-      const kh = uiK(this, 'hud_hueco_' + ({ potion: 'pocion', crystal: 'cristal', leaf: 'hoja' }[k] || 'x'));
+      const kh = uiK(this, 'hud_hueco_' + ({ potion: 'pocion', crystal: 'cristal', leaf: 'hoja', spool: 'hilo' }[k] || 'x'));
       let fr, ic, tx;
       if (kh) {
         fr = ic = sf(this.add.image(s(x), s(y), kh)); fr.setScale(s(36) / fr.width);
