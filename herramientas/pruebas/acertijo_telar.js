@@ -1,0 +1,57 @@
+// PRUEBA del Acertijo del Telar (puerta de la Aldea): la puerta sellada abre el telar; orden equivocado → los hilos se
+// sueltan; «Restablecer» limpia; orden correcto → la puerta se abre y al cruzarla se completa el nivel.
+const { chromium } = require('playwright'); const fs = require('fs');
+const [, , J, OUT] = process.argv; fs.mkdirSync(OUT, { recursive: true });
+const res = [], ok = (c, m, d) => { res.push({ ok: !!c, msg: m, d }); console.log((c ? '  ✓ ' : '  ✗ ') + m + (d !== undefined ? ' ' + JSON.stringify(d) : '')); };
+(async () => {
+  const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 720, height: 1280 } });
+  const errs = []; pg.on('pageerror', e => errs.push(e.message));
+  await pg.goto('file://' + J + '/index.html'); await pg.evaluate(() => localStorage.clear()); await pg.reload(); await pg.waitForTimeout(3000);
+  await pg.evaluate(() => { Save.load(); __g.scene.getScenes(true).forEach(s => __g.scene.stop(s.sys.settings.key)); __g.scene.start('Game', { level: 'aldea' }); });
+  await pg.waitForTimeout(2500);
+  const E = (f, a) => pg.evaluate(f, a), G = 'const s = __g.scene.getScene("Game");';
+  await E(() => { const g = __g, s = g.scene.getScene('Game'); g.loop.sleep(); window.T = performance.now(); s.tweens.getDelta = () => 16.667;
+    window.st = n => { for (let i = 0; i < n; i++) { T += 16.667; g.loop.now = T; g.loop.delta = 16.667; g.headlessStep(T, 16.667); } };
+    window.dib = () => { g.renderer.preRender(); s.sys.render(g.renderer); g.renderer.postRender(); };
+    s.spools = 1; s.sew(s.L.links[0]); st(120); for (let k = 0; k < 20 && s.talking; k++) { s.talkNext && s.talkNext(); st(5); } window.cierra = () => { for (let k = 0; k < 20 && s.talking && !s.telar; k++) { s.talkNext && s.talkNext(); st(5); } }; s.criaturas.forEach(e => { e.vivo = false; e.o.setVisible(false); e.bar.clear(); });
+    s.player.body.reset(2 * 1300, 2 * 410); st(30); });
+  ok(await E(() => !__g.scene.getScene('Game').acertijoResuelto && !!__g.scene.getScene('Game').sello), 'la puerta empieza sellada');
+  await E(() => { const s = __g.scene.getScene('Game'); s.player.body.reset(s.door.x, s.door.y - 40); st(10); });
+  ok(await E(() => !!__g.scene.getScene('Game').telar && !__g.scene.getScene('Game').won), 'al llegar a la puerta se abre el Acertijo del Telar (no se gana todavía)');
+  await E(() => dib()); await pg.screenshot({ path: OUT + '/1_telar.png' });
+  const toca = async k => { const q = await E(k => __g.scene.getScene('Game').telar.pos[k], k); await pg.mouse.click(q.x * 2, q.y * 2); await E(() => st(2)); };
+  for (const k of ['sol', 'luna', 'nube', 'hoja']) await toca(k);
+  ok(await E(() => __g.scene.getScene('Game').telar.orden.join() === 'sol,luna,nube,hoja'), 'tocar los símbolos tiende hilos en ese orden (con número)');
+  await E(() => dib()); await pg.screenshot({ path: OUT + '/2_conectado.png' });
+  await pg.mouse.click((await E(() => __g.scene.getScene('Game').telar.diseno)) ? 532 : 516, (await E(() => !!__g.scene.getScene('Game').telar && __g.scene.getScene('Game').telar.diseno)) ? 1188 : 1168); await E(() => st(3));
+  await E(() => dib()); await pg.screenshot({ path: OUT + '/3_equivocado.png' });
+  await E(() => st(50));
+  ok(await E(() => __g.scene.getScene('Game').telar.orden.length === 0 && !__g.scene.getScene('Game').acertijoResuelto), 'orden equivocado: los hilos se sueltan y se vacía');
+  await toca('luna'); await toca('nube');
+  await pg.mouse.click(192, 1188); await E(() => st(2));
+  ok(await E(() => __g.scene.getScene('Game').telar.orden.length === 0), '«Restablecer» quita los hilos');
+  for (const k of ['luna', 'sol', 'nube', 'hoja']) await toca(k);
+  await pg.mouse.click((await E(() => __g.scene.getScene('Game').telar.diseno)) ? 532 : 516, (await E(() => !!__g.scene.getScene('Game').telar && __g.scene.getScene('Game').telar.diseno)) ? 1188 : 1168); await E(() => st(20));
+  await E(() => dib()); await pg.screenshot({ path: OUT + '/4_correcto.png' });
+  await E(() => st(60));
+  ok(await E(() => __g.scene.getScene('Game').acertijoResuelto && !__g.scene.getScene('Game').telar), 'orden correcto (luna, sol, nube, hoja): se resuelve y se cierra');
+  await E(() => st(80));
+  ok(await E(() => __g.scene.getScene('Game').won), 'después, al cruzar la puerta se completa el nivel');
+  // cerrar sin resolver y volver a abrir (en tiempo real, como en el teléfono)
+  await E(() => { __g.loop.wake(); __g.scene.getScene('Game').scene.restart({ level: 'aldea' }); });
+  await pg.waitForTimeout(1500);
+  await E(() => { const s = __g.scene.getScene('Game'); s.L.links[0].done = true; s.criaturas.forEach(e => { e.vivo = false; }); for (let k = 0; k < 20 && s.talking; k++) { s.talkNext && s.talkNext(); } s.player.body.reset(s.door.x, s.door.y - 40); });
+  await pg.waitForTimeout(800);
+  ok(await E(() => !!__g.scene.getScene('Game').telar), 'otra partida: la puerta vuelve a abrir el telar');
+  const X = await E(() => __g.scene.getScene('Game').telar.diseno ? [28, 30] : [32, 122]); await pg.mouse.click(X[0] * 2, X[1] * 2); await pg.waitForTimeout(400);
+  ok(await E(() => !__g.scene.getScene('Game').telar && !__g.scene.getScene('Game').talking), 'la X cierra el telar y devuelve el control');
+  await pg.waitForTimeout(1200);
+  ok(await E(() => !__g.scene.getScene('Game').telar), 'quedarse en la puerta no lo reabre sin parar');
+  await E(() => { const s = __g.scene.getScene('Game'); s.player.body.reset(s.door.x - 120, s.door.y - 40); }); await pg.waitForTimeout(500);
+  await E(() => { const s = __g.scene.getScene('Game'); s.player.body.reset(s.door.x, s.door.y - 40); }); await pg.waitForTimeout(600);
+  ok(await E(() => !!__g.scene.getScene('Game').telar), 'al alejarse y volver, se abre otra vez');
+  ok(!errs.length, 'sin errores', errs);
+  fs.writeFileSync(OUT + '/acertijo.json', JSON.stringify({ pasos: res, errores: errs }, null, 1));
+  console.log(res.every(r => r.ok) ? 'TODO CORRECTO' : res.filter(r => !r.ok).length + ' FALLOS');
+  await b.close();
+})();

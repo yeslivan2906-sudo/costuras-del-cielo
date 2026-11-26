@@ -1,0 +1,29 @@
+# Costuras del Cielo · lo que NO va a git (se genera o es pesado y temporal)
+node_modules/
+respaldo/
+pruebas_juego/
+*.orig
+*.tgz
+*.zip
+
+# se genera con: python3 herramientas/empaquetar_assets.py
+assets/paquete_assets.js
+assets/paquete_assets2.js
+
+# se genera con: cd app_android && npm run sync
+app_android/www/
+app_android/android/app/src/main/assets/public/
+app_android/android/app/src/main/assets/capacitor.config.json
+app_android/android/app/src/main/assets/capacitor.plugins.json
+
+# Android (compilación)
+app_android/android/.gradle/
+app_android/android/build/
+app_android/android/app/build/
+app_android/android/local.properties
+*.apk
+*.aab
+*.keystore
+*.jks
+.idea/
+.DS_Store

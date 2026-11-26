@@ -1,0 +1,107 @@
+{
+ "escala": 0.25555555555555554,
+ "lienzo": [
+  148,
+  100
+ ],
+ "pie_fila": 97,
+ "eje_columna": 74,
+ "cuadros": {
+  "idle1": {
+   "origen": "quieta_01",
+   "desplazamiento_celda_px": -1.1
+  },
+  "idle2": {
+   "origen": "quieta_02",
+   "desplazamiento_celda_px": 0.5
+  },
+  "idle3": {
+   "origen": "quieta_03",
+   "desplazamiento_celda_px": -1.8
+  },
+  "idle4": {
+   "origen": "quieta_04",
+   "desplazamiento_celda_px": -2.8
+  },
+  "idle5": {
+   "origen": "quieta_05",
+   "desplazamiento_celda_px": -4.8
+  },
+  "idle6": {
+   "origen": "quieta_06",
+   "desplazamiento_celda_px": -0.9
+  },
+  "walk1": {
+   "origen": "caminar_01",
+   "desplazamiento_celda_px": -5.4
+  },
+  "walk2": {
+   "origen": "caminar_02",
+   "desplazamiento_celda_px": -4.8
+  },
+  "walk3": {
+   "origen": "caminar_03",
+   "desplazamiento_celda_px": -4.2
+  },
+  "walk4": {
+   "origen": "caminar_04",
+   "desplazamiento_celda_px": -3.6
+  },
+  "walk5": {
+   "origen": "caminar_05",
+   "desplazamiento_celda_px": -6.3
+  },
+  "walk6": {
+   "origen": "caminar_06",
+   "desplazamiento_celda_px": -3.3
+  },
+  "walk7": {
+   "origen": "caminar_07",
+   "desplazamiento_celda_px": -2.7
+  },
+  "walk8": {
+   "origen": "caminar_08",
+   "desplazamiento_celda_px": -3.2
+  },
+  "jump1": {
+   "origen": "saltar_01",
+   "desplazamiento_celda_px": -9.2
+  },
+  "jump2": {
+   "origen": "saltar_02",
+   "desplazamiento_celda_px": -1.7
+  },
+  "jump3": {
+   "origen": "saltar_03",
+   "desplazamiento_celda_px": -3.1
+  },
+  "sew1": {
+   "origen": "coser_01",
+   "desplazamiento_celda_px": 3.6
+  },
+  "sew2": {
+   "origen": "coser_02",
+   "desplazamiento_celda_px": 3.7
+  },
+  "sew3": {
+   "origen": "coser_03",
+   "desplazamiento_celda_px": 0.3
+  },
+  "sew4": {
+   "origen": "coser_04",
+   "desplazamiento_celda_px": 14.1
+  },
+  "attack1": {
+   "origen": "aguja_01",
+   "desplazamiento_celda_px": 2.1
+  },
+  "attack2": {
+   "origen": "aguja_02",
+   "desplazamiento_celda_px": 1.5
+  },
+  "attack3": {
+   "origen": "aguja_03",
+   "desplazamiento_celda_px": 1.3
+  }
+ }
+}

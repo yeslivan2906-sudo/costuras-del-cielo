@@ -1,0 +1,11 @@
+{
+  "appId": "com.estrellaerrante.costurasdelcielo",
+  "appName": "Costuras del Cielo",
+  "webDir": "www",
+  "backgroundColor": "#1b2440",
+  "android": {
+    "backgroundColor": "#1b2440",
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": false
+  }
+}
