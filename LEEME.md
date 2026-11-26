@@ -45,3 +45,4 @@ Versión en `app_android/android/app/build.gradle`: `versionName` (la que ven lo
 node herramientas/pruebas/recorrido_completo.js lib/phaser.min.js "$PWD" /tmp/salida
 ```
 (una por nivel: `nivel_tendederos.js`, `nivel_arroyo.js`… y `menus_y_controles.js`, `emocion.js`, `calidad_auto.js`).
+
