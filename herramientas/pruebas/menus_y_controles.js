@@ -42,8 +42,8 @@ const ok = (c, m, d) => { log.push({ ok: !!c, msg: m, ...(d !== undefined ? { da
   await toca(180, 470); ok((await act()) === 'Opciones', '«Opciones» abre la pantalla de opciones', await act());
   await foto('01_opciones');
   const aj0 = await E(() => ({ ...Save.aj() }));
-  await pg.mouse.move(560, 490); await pg.mouse.down(); await pg.mouse.move(400, 490, { steps: 4 }); await pg.mouse.up(); await pg.waitForTimeout(300);
-  await toca(302.5, 343.5); await toca(302.5, 370); await toca(317.5, 398);
+  await pg.mouse.move(560, 520); await pg.mouse.down(); await pg.mouse.move(400, 520, { steps: 4 }); await pg.mouse.up(); await pg.waitForTimeout(300);
+  await toca(298.5, 355); await toca(298.5, 380); await toca(316, 409);
   const aj1 = await E(() => ({ ...Save.aj() }));
   ok(aj1.efectos !== aj0.efectos && aj1.vibracion !== aj0.vibracion && aj1.tutoriales !== aj0.tutoriales && aj1.pistas !== aj0.pistas, 'deslizador de efectos, vibración, tutoriales y pistas cambian y se guardan', { antes: aj0, despues: aj1 });
   await toca(279, 507.5, 1400); const aj2 = await E(() => ({ ...Save.aj() }));
@@ -144,11 +144,11 @@ const ok = (c, m, d) => { log.push({ ok: !!c, msg: m, ...(d !== undefined ? { da
 
   // IDIOMAS: Opciones → Idioma → English / Português / Español; todo el texto cambia y queda guardado
   await E(() => { __g.scene.getScenes(true).forEach(s => __g.scene.stop(s.scene.key)); __g.scene.start('Opciones', {}); }); await pg.waitForTimeout(900);
-  await toca(145, 138, 900); ok(await textoVisible('Elige el idioma del juego'), 'la pestaña Idioma muestra los idiomas');
+  await toca(144.5, 140, 900); ok(await textoVisible('Elige el idioma del juego'), 'la pestaña Idioma muestra los idiomas');
   await toca(180, 350, 900); ok(await E(() => Idioma.actual === 'en' && Save.data.idioma === 'en'), 'elegir English cambia el idioma y lo guarda');
   ok(await textoVisible('Choose the game language'), 'los textos cambian al inglés al momento');
-  await toca(62, 138, 900); ok(await textoVisible('Music'), 'la pestaña General también sale en inglés');
-  await toca(145, 138, 900); await toca(180, 414, 900); ok(await E(() => Idioma.actual === 'pt') && await textoVisible('Escolha o idioma do jogo'), 'Português funciona');
+  await toca(60, 140, 900); ok(await textoVisible('Music'), 'la pestaña General también sale en inglés');
+  await toca(144.5, 140, 900); await toca(180, 414, 900); ok(await E(() => Idioma.actual === 'pt') && await textoVisible('Escolha o idioma do jogo'), 'Português funciona');
   await toca(180, 286, 900); ok(await E(() => Idioma.actual === 'es') && await textoVisible('Elige el idioma del juego'), 'volver a Español');
 
   fs.writeFileSync(OUT + '/menus_y_controles.json', JSON.stringify({ fallos, errores: errs, pasos: log }, null, 1));
