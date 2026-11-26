@@ -6,8 +6,8 @@ pruebas_juego/
 *.tgz
 *.zip
 
-# se genera con: python3 herramientas/empaquetar_assets.py
-assets/paquete_assets.js
+# el paquete de imágenes (assets/paquete_assets.js) SÍ va en git: GitHub Pages lo sirve tal cual.
+# Volver a generarlo con: python3 herramientas/empaquetar_assets.py
 assets/paquete_assets2.js
 
 # se genera con: cd app_android && npm run sync

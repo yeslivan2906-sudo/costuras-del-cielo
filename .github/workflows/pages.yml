@@ -1,9 +1,9 @@
 # Publica el juego en GitHub Pages cada vez que se sube algo a main.
 # Arma el paquete de imágenes (no está en git) y sube solo lo que el juego necesita.
 name: Publicar el juego (GitHub Pages)
+# Ahora la página se sirve directo de la rama main (Settings → Pages → Deploy from a branch), así que este
+# flujo queda solo para lanzarlo a mano si algún día se cambia la fuente a «GitHub Actions».
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 permissions:
   contents: read
