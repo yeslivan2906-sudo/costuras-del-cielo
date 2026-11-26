@@ -2271,7 +2271,10 @@ class Mundos extends Phaser.Scene {
     const capPct = progresoCap1();
     const pct = Math.round(capPct / MUNDOS.length);
     const [px, py, pw, ph] = Ly.expl.pct, [bx, by, bw, bh] = Ly.expl.bar;
-    softPatch(this, px, py, pw, ph, 0xfedcad, 5);
+    // cajita de Exploración limpia (recorte del fondo sin el número ni el relleno pintados): el número y la barra son reales
+    const kE = 'a/interfaz2/mapa_exploracion' + (Ly.panel ? '' : '_normal'), oE = Ly.panel ? [16, 836] : [40, 960];
+    if (this.textures.exists(kE)) this.add.image(s(oE[0] / 2), s(oE[1] / 2), kE).setOrigin(0).setScale(s(0.5)).setDepth(3);
+    else softPatch(this, px, py, pw, ph, 0xfedcad, 5);
     this.add.text(s(px), s(py + 1), pct + '%', { fontFamily: TITLE_FONT, fontSize: s(ph + 3) + 'px', color: '#4a1e1e', fontStyle: 'bold' }).setOrigin(0.5).setDepth(6);
     const bar = this.add.graphics().setDepth(6);
     bar.fillStyle(0x4b2a19); bar.fillRoundedRect(s(bx), s(by), s(bw), s(bh), s(bh / 2));
@@ -2316,13 +2319,9 @@ class Mundos extends Phaser.Scene {
   panelContinuar(capPct) {
     const k = 280 / 680, X = 40, Y = 436.5, u = (x, y) => [X + x * k, Y + y * k];   // px de la pieza → unidades
     const pan = this.add.image(s(X), s(Y), 'a/interfaz2/panel_continuar').setOrigin(0).setDepth(2); pan.setScale(s(k));
-    const capa = (x0, y0, w, h, r) => {   // recorte redondeado del fondo, encima del panel (en px del fondo de 720 × 1280)
-      const o = this.add.image(s(x0 / 2), s(y0 / 2), 'map_cont_bg').setOrigin(0).setCrop(x0 * this.textures.get('map_cont_bg').getSourceImage().width / 720, y0 * this.textures.get('map_cont_bg').getSourceImage().height / 1280, w * this.textures.get('map_cont_bg').getSourceImage().width / 720, h * this.textures.get('map_cont_bg').getSourceImage().height / 1280).setDepth(3);
-      const sw = this.textures.get('map_cont_bg').getSourceImage().width; o.setScale(s(W) / sw); o.setPosition(0, 0);
-      const mg = this.make.graphics({ add: false }); mg.fillStyle(0xffffff); mg.fillRoundedRect(s(x0 / 2), s(y0 / 2), s(w / 2), s(h / 2), s(r)); o.setMask(mg.createGeometryMask());
-      return o; };
-    capa(20, 840, 188, 103, 9);      // Exploración
-    capa(482, 858, 170, 50, 12);     // Taller de Nube
+    // recortes exactos del fondo (herramientas: assets/interfaz2/mapa_exploracion.png y mapa_taller.png), en px de 720 × 1280
+    [['mapa_taller', 480, 856]].forEach(([n, x0, y0]) => { const kk = 'a/interfaz2/' + n;
+      if (this.textures.exists(kk)) this.add.image(s(x0 / 2), s(y0 / 2), kk).setOrigin(0).setScale(s(0.5)).setDepth(3); });
     // imagen del nivel donde vas
     const L = LEVELS[nivelSiguiente()] || CAP1[0], n = Math.max(0, CAP1.indexOf(L)) + 1, kr = 'a/galeria/recuerdo_1-' + n;
     const [fx, fy] = u(143, 178);
