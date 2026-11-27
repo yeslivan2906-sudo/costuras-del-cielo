@@ -108,12 +108,12 @@ const ok = (c, m, d) => { log.push({ ok: !!c, msg: m, ...(d !== undefined ? { da
 
   console.log('MAPA, COMPRA Y TALLER');
   await foto('05_mapa');
-  await toca(257, 292, 900); ok(await textoVisible('Solo para adultos'), 'capítulo bloqueado → puerta para adultos antes de comprar');
+  await toca(92, 222, 900); ok(await textoVisible('Solo para adultos'), 'capítulo bloqueado → puerta para adultos antes de comprar');
   const resp = await E(() => { const s = __g.scene.getScene('Mundos'); const q = s.children.list.find(o => o.type === 'Text' && /Cuánto es/.test(o.text)).text.match(/(\d+) × (\d+)/); return String(q[1] * q[2]); });
   await tocaTexto(resp, 1400);
   ok(await E(() => Save.data.owned.cielo_completo === true), 'respuesta correcta → compra de prueba «Cielo completo» (modo prueba, sin cobro)');
   await pg.waitForTimeout(600);
-  await toca(257, 292, 700); ok(await textoVisible('llegará en una actualización'), 'capítulo II comprado pero sin niveles: «llegará en una actualización» (no programado)');
+  await toca(92, 222, 700); ok(await textoVisible('llegará en una actualización'), 'capítulo III comprado pero sin niveles: «llegará en una actualización» (no programado)');
   await pg.waitForTimeout(2300);
   await toca(277, 425, 900); ok((await act()) === 'Tienda', 'Taller de Nube abre la tienda', await act());
   await foto('06_taller');
