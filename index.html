@@ -2258,7 +2258,7 @@ class Mundos extends Phaser.Scene {
         g.lineStyle(s(2.4), C.goldLight); g.lineBetween(s(lock[0] - 4.5), s(lock[1]), s(lock[0] - 1), s(lock[1] + 4)); g.lineBetween(s(lock[0] - 1), s(lock[1] + 4), s(lock[0] + 5), s(lock[1] - 4));
       }
       hotspot(this, x, y, w, h, () => {
-        if (m.ready) this.scene.start('Capitulo');   // el capítulo muestra sus 12 niveles
+        if (m.ready) { if (!this.cayendo) caerAlCapitulo(this, x, y); }   // efecto de caída y el capítulo con sus 12 niveles
         else if (!open) comprarFlujo(this, 'cielo_completo', () => this.scene.restart(this.args));
         else aviso(this, 'Este capítulo llegará en una actualización');
       }, 30, 24);
@@ -2360,10 +2360,44 @@ const MEDALLON = {
   retazos: { w: 268, h: 158, num: [134, 62], est: [99, 133, 169], ey: 123 }, galaxia: { w: 283, h: 167, num: [142, 66], est: [107, 142, 177], ey: 125 } };
 const MED_NIVEL = { tendederos: 'cielo', arroyo: 'retazos', desvan: 'retazos', faroles: 'galaxia', corazon: 'galaxia' };
 const MAPA_CAP1 = [[130, 518], [125, 465], [225, 440], [150, 405], [76, 385], [165, 352], [280, 330], [200, 288], [110, 250], [165, 210], [270, 175], [270, 130]];
+// CAÍDA AL CAPÍTULO: zoom hacia la isla tocada, nubes que pasan hacia arriba (Lumi cae), destello blanco y el mapa
+// del capítulo «aterriza» desde arriba. Solo código (cuando llegue el video de Yesli se puede usar en su lugar).
+function caerAlCapitulo(sc, x, y) {
+  sc.cayendo = true; sc.input.enabled = false; try { Sfx.init(); Sfx.click(); } catch (e) {}
+  const cam = sc.cameras.main, D = 900;
+  cam.pan(s(x), s(y), 650, 'Sine.easeIn'); cam.zoomTo(2.4, 650, 'Cubic.easeIn');
+  sc.time.delayedCall(450, () => {
+    // capa de caída fija a la pantalla: velo, nubes subiendo y destellos
+    const velo = sc.add.rectangle(0, 0, s(W), s(H), 0xf6d8ff, 0).setOrigin(0).setScrollFactor(0).setDepth(D);
+    sc.tweens.add({ targets: velo, fillAlpha: 0.55, duration: 500 });
+    for (let i = 0; i < 16; i++) {
+      if (!sc.textures.exists('nube_suave')) {   // nube suave hecha con círculos difuminados (una sola vez)
+        const c = document.createElement('canvas'); c.width = 340; c.height = 240; const x = c.getContext('2d');
+        x.filter = 'blur(10px)'; x.fillStyle = '#ffffff';
+        [[70, 95, 48], [125, 70, 62], [185, 95, 46], [100, 110, 40], [160, 112, 42]].forEach(([cx, cy, r]) => { x.beginPath(); x.arc(cx + 42, cy + 45, r, 0, 7); x.fill(); });
+        sc.textures.addCanvas('nube_suave', c);
+      }
+      const tam = 110 + Math.random() * 150, n = sc.add.image(s(Math.random() * W), s(H + 40 + Math.random() * 300), 'nube_suave')
+        .setScale(s(tam) / 340).setTint([0xffffff, 0xf6e3ff, 0xeccdf6][i % 3]).setAlpha(0.9).setScrollFactor(0).setDepth(D + 1);
+      sc.tweens.add({ targets: n, y: s(-120 - Math.random() * 200), duration: 520 + Math.random() * 380, delay: Math.random() * 300, ease: 'Quad.easeIn' });
+    }
+    for (let i = 0; i < 22; i++) {
+      const p = sc.add.image(s(Math.random() * W), s(H + Math.random() * 200), 'spark').setScrollFactor(0).setDepth(D + 2).setTint(C.gold).setScale(0.4 + Math.random() * 0.6);
+      sc.tweens.add({ targets: p, y: s(-60), duration: 420 + Math.random() * 400, delay: Math.random() * 350 });
+    }
+    cam.shake(500, 0.004);
+  });
+  sc.time.delayedCall(1150, () => cam.flash(250, 255, 245, 255));
+  sc.time.delayedCall(1250, () => sc.scene.start('Capitulo', { llegada: true }));
+}
 class Capitulo extends Phaser.Scene {
   constructor() { super('Capitulo'); }
-  create() {
+  create(data) {
     const volver = () => this.scene.start('Mundos', { cont: true });   // con partida guardada: el mapa con su panel «Continuar»
+    if (data && data.llegada) {   // viene de la caída: aterriza desde arriba con un poco de rebote
+      const cam = this.cameras.main; cam.flash(350, 255, 245, 255); cam.setScroll(0, s(-90)); cam.setZoom(1.12);
+      this.tweens.add({ targets: cam, scrollY: 0, zoom: 1, duration: 650, ease: 'Back.easeOut' });
+    }
     const kf = 'a/menus/mapa_capitulo1';
     if (this.textures.exists(kf)) this.add.image(0, 0, kf).setOrigin(0).setDisplaySize(s(W), s(H)).setDepth(0);
     else cieloDeFondo(this, 9);

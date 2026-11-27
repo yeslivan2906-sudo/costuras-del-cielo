@@ -126,7 +126,7 @@ const ok = (c, m, d) => { log.push({ ok: !!c, msg: m, ...(d !== undefined ? { da
   await toca(180, 447, 900); ok(await textoVisible('Necesitas 5 cristales'), 'capucha Noche sin cristales suficientes: avisa cuántos faltan');
   await pg.waitForTimeout(2300);
   await tocaTexto('Volver', 900); ok((await act()) === 'Mundos', '«Volver» regresa al mapa');
-  await toca(95, 367, 1200); ok((await act()) === 'Capitulo', 'capítulo I en el mapa abre la lista de sus 12 niveles', await act());
+  await toca(95, 367, 2600); ok((await act()) === 'Capitulo', 'capítulo I en el mapa abre la lista de sus 12 niveles', await act());
   await toca(130, 518, 2500); ok(await E(() => __g.scene.isActive('Game') && __g.scene.getScene('Game').L.id === 'aldea'), 'tocar el 1-1 abre ese nivel');
 
   console.log('GUARDADO Y RECARGA');
