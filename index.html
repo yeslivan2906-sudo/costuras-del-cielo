@@ -2573,6 +2573,8 @@ const MEDALLON = {
   actual: { w: 292, h: 189, num: [146, 76], est: [108, 145, 181], ey: 141 }, cielo: { w: 274, h: 158, num: [137, 62], est: [100, 135, 171], ey: 123 },
   retazos: { w: 268, h: 158, num: [134, 62], est: [99, 133, 169], ey: 123 }, galaxia: { w: 283, h: 167, num: [142, 66], est: [107, 142, 177], ey: 125 } };
 const MED_NIVEL = { tendederos: 'cielo', arroyo: 'retazos', desvan: 'retazos', faroles: 'galaxia', corazon: 'galaxia' };
+// medallones del Capítulo II sobre el camino del mapa de Yesli (unidades del juego, de abajo hacia arriba)
+const MAPA_CAP2 = [[112, 534], [188, 512], [262, 490], [305, 459], [229, 415], [154, 381], [229, 350], [292, 325], [173, 294], [111, 272], [204, 225], [292, 181]];
 const MAPA_CAP1 = [[130, 518], [125, 465], [225, 440], [150, 405], [76, 385], [165, 352], [280, 330], [200, 288], [110, 250], [165, 210], [270, 175], [270, 130]];
 // CAÍDA AL CAPÍTULO: zoom hacia la isla tocada, nubes que pasan hacia arriba (Lumi cae), destello blanco y el mapa
 // del capítulo «aterriza» desde arriba. Solo código (cuando llegue el video de Yesli se puede usar en su lugar).
@@ -2682,19 +2684,30 @@ class Capitulo extends Phaser.Scene {
   // árboles y suelo) y sus medallones en zigzag. Los 12 niveles: los hechos se abren en orden; los que faltan, «pronto».
   capitulo2(volver) {
     this.aguas = [];
-    const capa = (k, d) => { if (!this.textures.exists(k)) return null; const o = this.add.image(s(W / 2), s(H), k).setOrigin(0.5, 1).setDepth(d); o.setScale(s(W) / o.width); return o; };
-    if (this.textures.exists('a/bosque2/fondo_cielo')) this.add.image(0, 0, 'a/bosque2/fondo_cielo').setOrigin(0).setDisplaySize(s(W), s(H)).setDepth(0); else cieloDeFondo(this, 9);
-    const medio = capa('a/bosque2/fondo_medio', 1), frente = capa('a/bosque2/fondo_frente', 2);
-    if (medio) this.tweens.add({ targets: medio, x: medio.x + s(4), duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const mapa = this.textures.exists('a/menus/mapa_capitulo2');   // el mapa de Yesli (árbol con camino); si falta, el fondo del bosque
+    if (mapa) this.add.image(0, 0, 'a/menus/mapa_capitulo2').setOrigin(0).setDisplaySize(s(W), s(H)).setDepth(0);
+    else this.fondoBosqueCap2();
     const comp = Save.data.completados || {}, est = Save.data.estrellas || {}, sig = (CAP2.find(l => !comp[l.key]) || {}).id;
     const estTot = CAP2.reduce((a, l) => a + (est[l.key] || 0), 0);
     txt(this, W / 2, 30, 'Capítulo II · Bosque de Papel', 19, '#fff4dc', 10, true, TITLE_FONT).setStroke('#4a1e4a', s(4));
     if (this.textures.exists('a/ui/estrella_llena')) { const e = this.add.image(s(268), s(62), 'a/ui/estrella_llena').setDepth(10); e.setScale(s(18) / e.width); }
     txt(this, 312, 62, `${estTot} / ${12 * 3}`, 15, '#fff4dc', 10, true, TITLE_FONT).setStroke('#4a1e4a', s(3));
     uiButton(this, 52, 62, 84, 30, 'Mapa', volver, 20, 14);
-    const pos = [[115, 560], [235, 522], [125, 484], [245, 446], [115, 408], [235, 370], [125, 332], [245, 294], [115, 256], [235, 218], [125, 180], [240, 136]];
-    const camino = this.add.graphics().setDepth(4); camino.lineStyle(s(3), 0xfff0c8, 0.55);
-    for (let i = 1; i < pos.length; i++) { const [a, b] = pos[i - 1], [c, d] = pos[i]; for (let k = 0; k < 6; k += 2) camino.lineBetween(s(a + (c - a) * k / 6), s(b + (d - b) * k / 6), s(a + (c - a) * (k + 1) / 6), s(b + (d - b) * (k + 1) / 6)); }
+    // posiciones sobre el camino del árbol de Yesli (de abajo hacia arriba)
+    const pos = mapa ? MAPA_CAP2 : [[115, 560], [235, 522], [125, 484], [245, 446], [115, 408], [235, 370], [125, 332], [245, 294], [115, 256], [235, 218], [125, 180], [240, 136]];
+    if (!mapa) { const camino = this.add.graphics().setDepth(4); camino.lineStyle(s(3), 0xfff0c8, 0.55);
+      for (let i = 1; i < pos.length; i++) { const [a, b] = pos[i - 1], [c, d] = pos[i]; for (let k = 0; k < 6; k += 2) camino.lineBetween(s(a + (c - a) * k / 6), s(b + (d - b) * k / 6), s(a + (c - a) * (k + 1) / 6), s(b + (d - b) * (k + 1) / 6)); } }
+    this.medallonesCap2(pos, comp, est, sig);
+  }
+
+  fondoBosqueCap2() {
+    const capa = (k, d) => { if (!this.textures.exists(k)) return null; const o = this.add.image(s(W / 2), s(H), k).setOrigin(0.5, 1).setDepth(d); o.setScale(s(W) / o.width); return o; };
+    if (this.textures.exists('a/bosque2/fondo_cielo')) this.add.image(0, 0, 'a/bosque2/fondo_cielo').setOrigin(0).setDisplaySize(s(W), s(H)).setDepth(0); else cieloDeFondo(this, 9);
+    const medio = capa('a/bosque2/fondo_medio', 1), frente = capa('a/bosque2/fondo_frente', 2);
+    if (medio) this.tweens.add({ targets: medio, x: medio.x + s(4), duration: 4200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  medallonesCap2(pos, comp, est, sig) {
     this.casillas = pos.map(([cx, cy], i) => {
       const L = CAP2[i], existe = !!L, abierto = existe && (i === 0 || !!comp[CAP2[i - 1].key] || !!comp[L.key]), hecho = existe && !!comp[L.key], toca = abierto && L.id === sig && !hecho;
       const tipoM = !abierto ? 'cerrado' : toca ? 'actual' : 'abierto', Md = MEDALLON[tipoM], kA = 'a/interfaz2/medallon_' + tipoM, k = 70 / 274;
