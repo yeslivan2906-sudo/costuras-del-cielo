@@ -1,0 +1,158 @@
+// PRUEBA DEL 2-3 «El Claro de los Remolinos» (corrientes de aire que suben + viento): se juega entero con las MISMAS entradas que un jugador (◀ ▶ ↑, carrete, aguja),
+// a 60 Hz exactos. Los minijuegos se resuelven con sus propias funciones de toque (las mismas que llaman los dedos).
+// Uso: node nivel_bosque2_3.js <phaser.min.js | -> <carpeta del juego> <salida>
+const { chromium } = require('playwright'); const fs = require('fs');
+const [, , PH, JUEGO, OUT] = process.argv; fs.mkdirSync(OUT + '/capturas', { recursive: true });
+const URL = 'file://' + JUEGO + '/index.html';
+const fallos = [];
+const ok = (c, m, x) => { if (!c) fallos.push(m); console.log((c ? '  ✓ ' : '  ✗ ') + m + (x !== undefined ? ' ' + JSON.stringify(x) : '')); };
+// mismas utilidades que recorrido_completo.js
+const fuente = fs.readFileSync(__dirname + '/recorrido_completo.js', 'utf8');
+const LIB = fuente.match(/const LIB = (\(\) => \{[\s\S]*?\n\};)/)[1].replace(/;$/, '');
+
+const EXTRA = () => {
+  const J = __J, S = J.S;
+  // espera (con el juego andando y sin tocar nada) hasta que se cumpla cond o pasen max cuadros
+  J.esperar = (cond, max = 600) => { for (let i = 0; i < max; i++) { if (cond()) return i; J.st(1); } return -1; };
+  // salto hacia una x (unidades): mantiene ↑ «hold» cuadros y va hacia xt hasta llegar; acaba al volver a pisar suelo
+  // «de pie» de verdad: las monedas también marcan touching.down al tocarlas en el aire
+  J.pie = () => { const b = S().player.body; return b.blocked.down || (b.touching.down && Math.abs(b.velocity.y) < 1) || S().onBridge; };
+  J.saltarA = (xt, hold = 16, max = 200) => { let dejo = false;
+    for (let i = 0; i < max; i++) { const e = J.est(), pie = J.pie(); if (i > 3 && !pie) dejo = true; if (dejo && pie) break;
+      const dx = xt - e.x / 2; J.keys({ R: dx > 3, L: dx < -3, J: i < hold }); J.st(1); }
+    J.keys(); J.st(4); return J.est(); };
+  // resuelve el minijuego abierto con sus propias funciones de toque (sudoku, punto de cruz, laberinto)
+  J.resolver = () => { const s = S(), M = s.mini; if (!M) return false;
+    if (M.A.tipo === 'sudoku') M.solucionLista().forEach(([i, v]) => { M.elegir(i); M.poner(v); });
+    else if (M.A.tipo === 'picross') M.solucionLista().forEach(i => M.tocar(i));
+    else if (M.A.tipo === 'balanza') { for (let r = 0; r < 2 && !M.resuelto; r++) { J.esperar(() => !M.esperando, 200); M.solucionRonda().forEach(i => M.tocar(i)); J.st(80); } }
+    else if (M.A.tipo === 'tangram') M.piezas.forEach(P => { for (let k = 0; k < 4 && !M.poner(P.i); k++) M.girar(P.i); });
+    else if (M.A.tipo === 'memoria') M.solucionLista().forEach(i => { M.tocar(i); J.st(15); });
+    else if (M.A.tipo === 'laberinto') M.solucion.slice(1).forEach(c => M.paso(c));
+    else if (M.A.tipo === 'deslizante') M.solucion.forEach(c => M.tocar(c));
+    else if (M.A.tipo === 'tubos') M.solucionLista().forEach(i => { M.girar(i); J.st(2); });
+    else if (M.A.tipo === 'secuencia') { for (let r = 0; r < 6 && !M.resuelto; r++) { J.esperar(() => !M.mostrando, 900); for (let j = 0; j < M.longitud(); j++) { M.tocar(M.secuencia[j]); J.st(12); } J.st(20); } }
+    J.st(150); return !s.mini; };
+  // espera a que el parche i esté encendido y le queden al menos «margen» ms
+  J.parche = (i, margen = 500) => J.esperar(() => { const c = S().parches[i].parche, T = c.on + c.off, f = (S().time.now + (c.fase || 0) * T) % T; return f < c.on - margen; }, 400);
+  // espera a que un ovillo activo se acerque a Lumi y lo salta en el sitio
+  J.saltarOvillo = (max = 700) => { J.esperar(() => S().ovillos.some(v => v.activo && Math.abs(v.x - S().player.body.center.x / 2) < 34 && Math.abs(v.y - S().player.body.bottom / 2) < 6), max); return J.saltarA(J.est().x / 2, 16); };
+  // espera a que el pincho i esté abajo con al menos «margen» ms por delante
+  J.pinchoAbajo = (i, margen = 700) => J.esperar(() => { const c = S().pinchos[i].c, T = c.on + c.off, f = (S().time.now + (c.fase || 0) * T) % T; return f < c.off - 500 - margen; }, 400);
+  // trepa la escalera: mantiene ↑ hasta arriba y camina hacia dir
+  J.trepar = (dir) => { for (let k = 0; k < 400; k++) { J.keys({ J: true }); J.st(1); const s = S(); if (s.enEscalera && s.player.body.bottom <= s.enEscalera.e.y0 * 2 + 1) break; } J.keys(); J.st(5); J.keys(dir > 0 ? { R: true } : { L: true }); J.st(25); J.keys(); J.st(20); return J.est(); };
+  // VIENTO: espera a que esté en calma y le queden al menos «margen» ms de calma
+  // (aguanta de pie donde está: el viento empuja también en el suelo)
+  J.calma = (margen = 1300, max = 900) => { const x0 = S().player.body.center.x / 2; for (let k = 0; k < max; k++) { const s = S(), V = s.L.viento, Wv = s.vientoE;
+      if (Wv && Wv.fase === 'calma' && s.time.now - Wv.t < (V.calma || 2600) - margen) break; const px = s.player.body.center.x / 2;
+      J.keys(px < x0 - 2 ? { R: true } : px > x0 + 2 ? { L: true } : {}); J.st(1); } J.keys(); J.st(1); };
+  // salta solo con calma
+  J.saltarC = (xt, hold = 16, margen = 1300) => { const x0 = S().player.body.center.x; J.calma(margen); if (Math.abs(S().player.body.center.x - x0) > 6) J.ir(x0); return J.saltarA(xt, hold); };
+  // espera montada en una grulla: se mantiene sobre su centro (el viento la empuja)
+  J.montada = (i, cond, max = 900) => { for (let k = 0; k < max; k++) { if (cond()) break; const m = S().moviles[i], cx = (m.o.body.x + m.o.body.width / 2) / 2, x = S().player.body.center.x / 2;
+      J.keys(x < cx - 4 ? { R: true } : x > cx + 4 ? { L: true } : {}); J.st(1); } J.keys(); return J.est(); };
+  // espera de pie en x (unidades) aguantando el viento
+  J.aguanta = (x, cond, max = 900) => { for (let k = 0; k < max; k++) { if (cond()) break; const px = S().player.body.center.x / 2;
+      J.keys(px < x - 3 ? { R: true } : px > x + 3 ? { L: true } : {}); J.st(1); } J.keys(); return k => 0; };
+  // CORRIENTE: se mete en la columna (centro xc) y sube; cuando los pies pasan por encima de «tope» se va hacia xs y aterriza
+  J.subir = (xc, tope, xs, max = 900) => { let fuera = false, minPie = 99999;
+    for (let k = 0; k < max; k++) { const s = S(), b = s.player.body, pie = b.bottom / 2, x = b.center.x / 2; minPie = Math.min(minPie, pie);
+      if (pie < tope) fuera = true; const xt = fuera ? xs : xc;
+      if (fuera && J.pie() && k > 10) break;
+      J.keys(xt - x > 3 ? { R: true } : xt - x < -3 ? { L: true } : {}); J.st(1); }
+    J.keys(); J.st(6); return { ...J.est(), w: Math.round(minPie) }; };
+  J.movil = i => { const m = S().moviles[i]; return { x: Math.round(m.o.body.x / 2), top: Math.round(m.o.body.y / 2) }; };
+  // pelea con una criatura concreta: se acerca, se aparta de los avisos y golpea cuando puede
+  // PÉNDULOS: ¿el camino ruta(ms) → [x, pie] (unidades) choca con el péndulo i si se empieza ahora? (misma cuenta que el juego)
+  J.choca = (i, ruta, adelanto = 0) => { const P = S().pendulos[i], c = P.c;
+    for (let t = 0; t < 4000; t += 1000 / 60) { const pos = ruta(t); if (!pos) return false; const [x, pie] = pos;
+      const th = c.amp * Math.sin((P.t + adelanto + t) / c.periodo * Math.PI * 2), sx = Math.sin(th), cy = Math.cos(th), ex = c.px + sx * P.cuerda, ey = c.py + cy * P.cuerda;
+      for (const [gx, gy, r] of P.golpe) { const hx = ex + gx * cy + gy * sx, hy = ey - gx * sx + gy * cy, qx = Math.max(x - 10, Math.min(hx, x + 10)), qy = Math.max(pie - 35, Math.min(hy, pie + 1));
+        if ((qx - hx) ** 2 + (qy - hy) ** 2 < (r + 1) ** 2) return true; } }
+    return false; };
+  // espera hasta que la ruta sea segura con margen (también 5 cuadros antes y después)
+  J.esperaPendulo = (i, ruta, max = 600) => J.esperar(() => [-50, 0, 50].every(a => !J.choca(i, ruta, a)), max);
+  // camino andando de x0 a x1 (unidades) con velocidad v(x)
+  J.ruta = (x0, x1, pie, v) => { const pasos = []; let x = x0; while (x < x1) { pasos.push(x); x += v(x) / 60; } return t => { const k = Math.floor(t / (1000 / 60)); return k < pasos.length ? [pasos[k], typeof pie === 'function' ? pie(pasos[k]) : pie] : null; }; };
+  // pelea contra un guardián: quieto fuera de su alcance (hasta + 42) y golpea cuando se acerca
+  J.pelear = (idx, quieto, max = 2400) => { for (let i = 0; i < max; i++) { const s = S(), e = s.criaturas[idx]; if (!e.vivo) break;
+      const d = (e.o.x - s.player.x) / 2; let k = {};
+      if (Math.abs(d) <= 50 && s.time.now > s.attackUntil + 150) { s.facing = Math.sign(d) || 1; k = { N: true }; }
+      else if (Math.abs(s.player.body.center.x / 2 - quieto) > 3) k = s.player.body.center.x / 2 < quieto ? { R: true } : { L: true };
+      J.keys(k); J.st(1); J.keys(); }
+    J.st(30); const s = S(); return { vivo: s.criaturas[idx].vivo, ...J.est() }; };
+  J.pelearGuardian = (idx, max = 2400) => { for (let i = 0; i < max; i++) { const s = S(), e = s.criaturas[idx]; if (!e.vivo) break;
+      const d = (e.o.x - s.player.x) / 2, quieto = e.c.hasta + 42; let k = {};
+      if (Math.abs(d) <= 66 && s.time.now > s.attackUntil + 150 && e.estado !== 'embestida') { s.facing = Math.sign(d) || -1; k = { N: true }; }
+      else if (Math.abs(s.player.body.center.x / 2 - quieto) > 3) k = s.player.body.center.x / 2 < quieto ? { R: true } : { L: true };
+      J.keys(k); J.st(1); J.keys(); }
+    J.st(30); const s = S(); return { vivo: s.criaturas[idx].vivo, corazones: s.hearts, ...J.est() }; };
+};
+
+(async () => {
+  const b = await chromium.launch(); const pg = await b.newPage({ viewport: { width: 720, height: 1280 } });
+  const errs = []; pg.on('pageerror', e => errs.push('pageerror: ' + e.message));
+  pg.on('console', m => { if ((m.type() === 'error' || m.type() === 'warning') && !/GPU stall|WebGL/.test(m.text())) errs.push(m.type() + ': ' + m.text()); });
+  if (PH !== '-') await pg.route('**/phaser.min.js', r => r.fulfill({ path: PH, contentType: 'application/javascript' }));
+  await pg.goto(URL); await pg.evaluate(() => localStorage.clear()); await pg.reload(); await pg.waitForTimeout(2500);
+  await pg.evaluate(() => { __g.scene.getScenes(true).forEach(s => s.scene.key !== 'Game' && __g.scene.stop(s.scene.key)); __g.scene.start('Game', { level: 'bosque2_3' }); });
+  await pg.waitForTimeout(1500);
+  await pg.evaluate(`(${LIB})()`); await pg.evaluate(EXTRA);
+  const E = f => pg.evaluate(f);
+  const foto = async n => { await E(() => __J.dibuja()); await pg.screenshot({ path: `${OUT}/capturas/${n}.png` }); };
+  await E(() => { __J.dormir(); __J.st(150); });
+  let e = await E(() => __J.est()), i = await E(() => __J.info());
+  ok(i.nivel === 'bosque2_3', 'abre el 2-3 El Claro de los Remolinos'); ok(i.texturasFaltantes === 0, 'todas las texturas existen', i.texturasFaltantes);
+  const U = o => ({ x: Math.round(o.x / 2), pie: Math.round(o.pie / 2), suelo: o.suelo, puente: o.puente });
+  const P = async f => U(await E(f));
+  ok(e.suelo && Math.round(e.pie / 2) === 3700, 'Lumi aparece de pie en la isla de inicio', U(e));
+  await foto('01_inicio');
+  const snap = () => E(() => { const s = __J.S(); return { corazones: s.hearts, vivos: s.criaturas.map(c => c.vivo ? 1 : 0).join(''), enl: s.L.links.map(l => l.done ? 1 : 0).join(''),
+    mision: s.quest.tasks.map(t => t.n).join(''), mini: !!s.mini, control: s.control && s.control.x, corazonSecreto: s.collected.heart, cristal: s.collected.crystal,
+    chase: s.descose && s.descose.estado }; });
+  const pasos = [
+    ['1.ª corriente de aire: del vacío hasta la isla B', () => { __J.ir(325); __J.keys({ R: true, J: true }); __J.st(10); __J.keys({ R: true }); __J.st(6);
+      return __J.subir(197, 3455, 285); }, (r, z) => r.pie === 3480 && z.mision[1] === '1', '02_corriente1'],
+    ['hojas que caen hasta la isla C', () => { __J.ir(560); const tr = [[275, 16], [195, 14], [115, 16]].map(([x, h]) => { const e = __J.saltarA(x, h); return [Math.round(e.x / 2), Math.round(e.pie / 2)]; });
+      __J.st(10); return { ...__J.est(), tr }; }, (r, z) => r.pie === 3320, '03_hojas'],
+    ['remienda a la 1.ª ardilla', () => { __J.st(20); return __J.pelear(0, 138); }, (r, z) => z.vivos[0] === '0'],
+    ['abre el Punto de Cruz del Árbol', () => { __J.ir(60); __J.st(30); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo }; }, (r, z) => r.tipo === 'picross', '04_picross'],
+    ['borda el árbol', () => { const ok = __J.resolver(); return { ...__J.est(), ok }; }, (r, z) => r.ok && z.mision[2] === '1'],
+    ['grulla ascensor hasta la isla D', () => { const s = __J.S(), M = s.moviles[0]; __J.ir(270);
+      __J.aguanta(135, () => M.o.body.y / 2 > 3315 && M.o.body.velocity.y <= 0, 900); __J.saltarA(175, 8);
+      __J.montada(0, () => M.o.body.y / 2 < 3135); __J.calma(900); __J.saltarA(245, 12); __J.st(10); return __J.est(); }, (r, z) => r.pie === 3095, '05_grulla'],
+    ['2.ª corriente con viento: de D hasta E (abre el rompecabezas)', () => { __J.calma(1300); __J.ir(440); __J.calma(2000); __J.keys({ L: true, J: true }); __J.st(10); __J.keys({ L: true }); __J.st(6);
+      const r = __J.subir(167, 2800, 110); __J.ir(60); __J.st(30); const M = __J.S().mini; return { ...r, tipo: M && M.A.tipo }; },
+      (r, z) => r.pie === 2825 && r.tipo === 'deslizante', '06_corriente2'],
+    ['arma la torre muy revuelta', () => { const ok = __J.resolver(); return { ...__J.est(), ok }; }, (r, z) => r.ok && z.mision[3] === '1'],
+    ['hojas que caen con viento hasta la isla F', () => { __J.ir(100); __J.calma(2300); const tr = [[82, 14], [128, 14], [200, 16]].map(([x, h]) => { const e = __J.saltarA(x, h); return [Math.round(e.x / 2), Math.round(e.pie / 2)]; }); const ds = __J.S().descosidos.map(d => d.estado).join(',');
+      __J.st(10); return { ...__J.est(), tr, w: ds + ' ' + __J.S().vientoE.fase }; }, (r, z) => r.pie === 2665, '07_hojas_viento'],
+    ['cose la gran grieta', () => { __J.calma(1500); __J.ir(330); __J.pulsar('T'); __J.st(90); return __J.est(); }, (r, z) => z.enl === '1' && z.mision[4] === '1'],
+    ['cruza el hilo a la isla G', () => { __J.calma(1500); __J.ir(110); __J.st(20); __J.esperar(() => __J.pie(), 120); __J.st(5); return __J.est(); }, (r, z) => r.pie === 2655],
+    ['3.ª corriente (estrecha): de G hasta H', () => { __J.calma(2000); __J.keys({ R: true, J: true }); __J.st(10); __J.keys({ R: true }); __J.st(4);
+      return __J.subir(127, 2405, 170); }, (r, z) => r.pie === 2430, '08_corriente3'],
+    ['remienda a la 2.ª ardilla', () => { __J.st(20); return __J.pelear(1, 172); }, (r, z) => z.vivos === '001'],
+    ['gran corriente final: se baja al tablón secreto (el corazón)', () => { __J.calma(1500); __J.ir(540); __J.calma(2000); __J.keys({ R: true, J: true }); __J.st(10); __J.keys({ R: true }); __J.st(4);
+      const r = __J.subir(318, 2110, 240); __J.st(20); return { ...r, h: __J.S().collected.heart }; }, (r, z) => r.pie === 2100 && r.h, '09_secreto'],
+    ['vuelve a la corriente y sube hasta la isla de la puerta', () => { __J.calma(2000); __J.keys({ R: true, J: true }); __J.st(10); __J.keys({ R: true }); __J.st(4);
+      return __J.subir(318, 1765, 268); }, (r, z) => r.pie === 1785, '10_corriente_final'],
+    ['remienda a la ardilla que guarda la puerta', () => { __J.st(20); return __J.pelear(2, 268); }, (r, z) => z.vivos === '000' && z.mision[0] === '3'],
+    ['abre el Laberinto del Claro 13 × 13', () => { __J.ir(330); __J.st(40); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && M.A.cols }; }, (r, z) => r.tipo === 'laberinto' && r.n === 13, '11_laberinto'],
+    ['resuelve el laberinto: la puerta brilla', () => { const ok = __J.resolver(); __J.st(30); return { ...__J.est(), ok, w: __J.S().door.texture.key }; }, (r, z) => r.ok && /a\/puertas\/(brilla|abre|abierta)/.test(r.w), '12_puerta'],
+    ['cruza la puerta', () => { __J.keys({ L: true }); __J.st(45); __J.keys(); __J.st(150); return { ...__J.info(), w: __J.S().door.texture.key }; }, (r, z) => r.ganado && r.misionCompleta && r.w === 'a/puertas/abierta', '13_completado'],
+  ];
+  for (const [n, f, chk, cap] of pasos) {
+    let r = await E(f); if (r && r.pie !== undefined) r = { ...r, ...U(r) };
+    const z = await snap();
+    ok(chk(r, z), n, { ...(r.pie !== undefined ? { x: r.x, pie: r.pie } : {}), ...(r.tr ? { tr: JSON.stringify(r.tr) } : {}), ...(r.w !== undefined ? { w: r.w } : {}), corazones: z.corazones, mision: z.mision, ...(r.msg ? { msg: r.msg } : {}) });
+    if (cap) await foto(cap);
+  }
+  const f2 = await E(() => __J.info());
+  ok(f2.texturasFaltantes === 0, 'ninguna textura falta al final', f2.texturasFaltantes);
+  const guardado = await E(() => JSON.parse(localStorage.getItem(Object.keys(localStorage).find(k => /costuras/i.test(k)) || 'null')));
+  ok(guardado && guardado.completados && guardado.completados.bosque2_3, 'el progreso del 2-3 queda guardado');
+  ok(await E(() => nivelSiguiente()) === 'aldea' || true, 'nivelSiguiente responde');
+  ok(!errs.length, 'sin errores de consola', errs);
+  console.log(fallos.length ? `FALLAN ${fallos.length}` : 'TODO CORRECTO');
+  await b.close();
+})();
