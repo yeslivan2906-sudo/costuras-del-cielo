@@ -5460,7 +5460,7 @@ class Game extends Phaser.Scene {
     const TAB = { 5: { lx: [313, 458, 597, 739, 880, 1032], ly: [320, 461, 600, 734, 865, 994], pf: [150, 301], pc: [220, 307] },
                   7: { lx: [388, 486, 581, 675, 770, 864, 959, 1056], ly: [383, 482, 577, 674, 770, 868, 964, 1061], pf: [141, 364], pc: [212, 372] },
                   // 8 × 8 con flores (1-11, 499 × 475 px): sin paneles; los números van fuera, sobre la casilla de tela de Yesli
-                  8: { lx: [107, 146, 184, 222, 260, 298, 336, 374, 412], ly: [106, 145, 183, 222, 260, 298, 337, 375, 414], base: 499, B: 280, cx: 199, cy: 386, fuera: true } };
+                  8: { lx: [107, 146, 184, 222, 260, 298, 336, 374, 412], ly: [106, 145, 183, 222, 260, 298, 337, 375, 414], base: 499, B: 258, cx: 206, cy: 392, fuera: true } };
     const tb = R === Cn && TAB[R], kT = tb && uiK(this, 'picross_tablero' + R);
     let panelF = null, panelC = null;
     if (kT) {
@@ -5470,9 +5470,15 @@ class Game extends Phaser.Scene {
       LX = tb.lx.map(v => ox + u(v)); LY = tb.ly.map(v => oy + u(v));
       x0 = LX[0]; y0 = LY[0]; anch = LX[Cn] - x0; alt = LY[R] - y0; cel = Math.min(anch / Cn, alt / R);
       if (tb.fuera) {   // paneles fuera del tablero: la casilla de tela de Yesli estirada (9 trozos, las esquinas no se deforman)
-        panelF = { x0: 8, x1: ox - 2 }; panelC = { y0: oy - 56, y1: oy - 4 };
-        // tapa el marco dorado vacío del fondo común (este tablero es de otra medida)
-        sf(this.add.graphics().setDepth(D + 1.5)).fillStyle(0x4a2b46, 1).fillRoundedRect(s(44), s(191), s(272), s(277), s(10));
+        panelF = { x0: 14, x1: ox - 3 }; panelC = { y0: oy - 50, y1: oy - 6 };
+        // una sola tarjeta ordenada detrás de números y tablero (tapa también el marco vacío del fondo común)
+        const tg = sf(this.add.graphics().setDepth(D + 1.5)), ty0 = panelC.y0 - 8, ty1 = oy + Bh + 4;
+        tg.fillStyle(0x4a2b46, 1).fillRoundedRect(s(6), s(ty0), s(348), s(ty1 - ty0), s(12));
+        tg.lineStyle(s(2), 0xd9a84e, 0.9).strokeRoundedRect(s(6), s(ty0), s(348), s(ty1 - ty0), s(12));
+        // guías punteadas de cada número a su fila / columna (cruzan el marco del bastidor)
+        const gg = sf(this.add.graphics().setDepth(D + 2.6)); gg.fillStyle(0xfff1d8, 0.55);
+        for (let r = 0; r < R; r++) { const yy = (LY[r] + LY[r + 1]) / 2; for (let xx = panelF.x1 + 3; xx < LX[0] - 2; xx += 5) gg.fillCircle(s(xx), s(yy), s(0.9)); }
+        for (let c = 0; c < Cn; c++) { const xx = (LX[c] + LX[c + 1]) / 2; for (let yy = panelC.y1 + 3; yy < LY[0] - 2; yy += 5) gg.fillCircle(s(xx), s(yy), s(0.9)); }
         const caja = (x, y, w, h) => { const kc = 'a/pasillo/casilla';
           if (this.textures.exists(kc)) sf(this.add.nineslice(s(x + w / 2), s(y + h / 2), kc, null, s(w), s(h), 16, 16, 16, 16).setDepth(D + 2));
           else { const gc = sf(this.add.graphics().setDepth(D + 2)); gc.fillStyle(0xf6e7c8); gc.fillRoundedRect(s(x), s(y), s(w), s(h), s(6)); } };
