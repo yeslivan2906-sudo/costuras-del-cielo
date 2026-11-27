@@ -108,25 +108,32 @@ const EXTRA = () => {
     ['sube a la grulla diagonal y vuela hasta la isla C', () => { const s = __J.S(), M = s.moviles[0];
       __J.ir(396); __J.calma(2000); __J.esperar(() => { const x = M.o.body.x / 2; return x < 222 && M.o.body.velocity.x <= 0; }, 900); __J.saltarA(246, 8);
       const enG = __J.est(); __J.montada(0, () => M.o.body.x / 2 > 272); const e2 = __J.est(); __J.saltarA(222, 10); __J.st(10); return { ...__J.est(), w: [Math.round(enG.pie / 2), Math.round(e2.x / 2), Math.round(e2.pie / 2)].join('/') }; __J.st(10); __J.st(10); return { ...__J.est(), w: Math.round(enG.pie / 2) }; },
-      (r, z) => r.pie === 2470 && z.mision[3] === '1', '03_grulla'],
+      (r, z) => r.pie === 2470 && z.mision[4] === '1', '03_grulla'],
     ['remienda a la 1.ª ardilla', () => { __J.st(30); const r = __J.pelear(0, 222); __J.ir(440); return r; }, (r, z) => z.vivos[0] === '0'],
     ['tablones con viento hasta la isla del pedestal', () => { __J.calma(1300); __J.ir(440); __J.esperar(() => __J.S().moviles[0].o.body.x / 2 < 240, 600); __J.ir(440); const tr = []; const e0 = __J.est(); tr.push([Math.round(e0.x/2), Math.round(e0.pie/2)]); for (const x of [292, 332, 250]) { const e = __J.saltarC(x); tr.push([Math.round(e.x/2), Math.round(e.pie/2)]); } __J.st(10); return { ...__J.est(), tr }; }, (r, z) => r.pie === 2310, '04_tablones'],
-    ['abre la Secuencia de Luces (4 rondas)', () => { __J.ir(350); __J.st(30); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && (M.A.rondas || []).length }; }, (r, z) => r.tipo === 'secuencia' && r.n === 4, '05_secuencia'],
+    ['abre la Secuencia de Luces (5 → 8 luces)', () => { __J.ir(350); __J.st(30); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, w: M && (M.A.rondas || []).join(',') }; }, (r, z) => r.tipo === 'secuencia' && r.w === '5,6,7,8', '05_secuencia'],
     ['repite las 4 secuencias', () => { const ok = __J.resolver(); return { ...__J.est(), ok }; }, (r, z) => r.ok && z.mision[1] === '1'],
     ['cose la gran grieta', () => { __J.ir(296); __J.pulsar('T'); __J.st(90); return __J.est(); }, (r, z) => z.enl === '1' && z.mision[2] === '1'],
     ['cruza el hilo a la isla E', () => { __J.ir(120); __J.st(20); return __J.est(); }, (r, z) => r.pie === 2300],
     ['hojas que caen hasta la grulla ascensor', () => { __J.ir(150); __J.calma(2300); const tr = [125, 55, 125].map(x => Math.round(__J.saltarA(x, 14).pie / 2)); __J.st(5); return { ...__J.est(), tr }; },
       (r, z) => r.pie === 2145, '06_hojas_altas'],
-    ['grulla ascensor hasta la isla F', () => { const s = __J.S(), M = s.moviles[1];
-      __J.aguanta(128, () => M.o.body.y / 2 > 2098 && M.o.body.velocity.y <= 0, 900); __J.saltarA(191, 8); const enG = __J.est();
-      let mn = 9999; __J.montada(1, () => { mn = Math.min(mn, M.o.body.y / 2); return M.o.body.y / 2 < 1914; }); const e2 = __J.est(); __J.keys({ R: true }); __J.st(30); __J.keys(); __J.st(20); __J.ir(500); __J.st(10); return { ...__J.est(), w: [Math.round(enG.pie / 2), Math.round(mn), Math.round(e2.x/2), Math.round(e2.pie/2)].join('/') }; },
-      (r, z) => r.pie === 1915, '07_ascensor'],
-    ['remienda a la 2.ª ardilla', () => { __J.st(30); return __J.pelear(1, 262); }, (r, z) => z.vivos === '00' && z.mision[0] === '2'],
-    ['tablón secreto: el corazón', () => { __J.ir(480); __J.saltarC(195); __J.saltarC(275); __J.st(20); return { ...__J.est(), w: __J.S().collected.heart }; }, (r, z) => r.pie === 1810, '08_secreto'],
-    ['vuelve y salta a la isla de la puerta', () => { const tr = [[195, 6], [90, 14]].map(([x, h]) => { __J.calma(1500); if (x === 90) __J.ir(372); const e = __J.saltarA(x, h); return [Math.round(e.x / 2), Math.round(e.pie / 2)]; }); __J.st(10); return { ...__J.est(), tr }; }, (r, z) => r.pie === 1830],
-    ['abre los Tubos del Sendero 5 × 5', () => { __J.ir(80); __J.st(40); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && M.A.n }; }, (r, z) => r.tipo === 'tubos' && r.n === 5, '09_tubos'],
-    ['resuelve los tubos y cruza la puerta', () => { const ok = __J.resolver(); __J.st(60); __J.keys({ L: true }); __J.st(30); __J.keys(); __J.st(150); return { ...__J.info(), ok }; },
-      (r, z) => r.ok && r.ganado && r.misionCompleta, '10_completado'],
+    ['grulla ascensor hasta la isla F (abre el Sudoku)', () => { const s = __J.S(), M = s.moviles[1];
+      __J.aguanta(128, () => M.o.body.y / 2 > 2098 && M.o.body.velocity.y <= 0, 900); __J.saltarA(191, 8);
+      __J.montada(1, () => M.o.body.y / 2 < 1914); __J.keys({ R: true }); __J.st(30); __J.keys(); __J.st(20); __J.ir(490); __J.st(20);
+      const m = __J.S().mini; return { ...__J.est(), tipo: m && m.A.tipo, n: m && m.A.n }; },
+      (r, z) => r.pie === 1915 && r.tipo === 'sudoku' && r.n === 6, '07_sudoku'],
+    ['resuelve el Sudoku 6 × 6 de 11 pistas', () => { const ok = __J.resolver(); return { ...__J.est(), ok }; }, (r, z) => r.ok && z.mision[3] === '1'],
+    ['remienda a la 2.ª ardilla', () => { __J.st(30); return __J.pelear(1, 262); }, (r, z) => z.vivos === '001'],
+    ['tablón secreto: el corazón', () => { __J.calma(1500); __J.ir(470); __J.saltarA(190, 14); __J.saltarA(278, 14); __J.st(20); return { ...__J.est(), w: __J.S().collected.heart }; }, (r, z) => r.pie === 1810 && r.w, '08_secreto'],
+    ['baja a F y espera a que vuelva la hoja', () => { __J.keys({ L: true }); __J.st(25); __J.keys(); __J.st(10); __J.calma(1500); __J.st(200); return __J.est(); }, (r, z) => r.pie === 1915],
+    ['subida final con viento: hojas, tablón y hoja hasta la puerta', () => { __J.ir(470); __J.calma(2300);
+      const tr = []; for (const [x, h] of [[190, 14], [120, 14], [45, 14]]) { const e = __J.saltarA(x, h); tr.push([Math.round(e.x / 2), Math.round(e.pie / 2)]); }
+      __J.calma(2000); for (const [x, h] of [[115, 14], [172, 16]]) { const e = __J.saltarA(x, h); tr.push([Math.round(e.x / 2), Math.round(e.pie / 2)]); }
+      __J.st(10); return { ...__J.est(), tr }; }, (r, z) => r.pie === 1660, '09_subida'],
+    ['remienda a la ardilla que guarda la puerta', () => { __J.st(20); return __J.pelear(2, 172); }, (r, z) => z.vivos === '000' && z.mision[0] === '3'],
+    ['abre los Tubos del Sendero 6 × 6', () => { __J.ir(530); __J.st(40); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && M.A.n }; }, (r, z) => r.tipo === 'tubos' && r.n === 6, '10_tubos'],
+    ['resuelve los tubos y cruza la puerta', () => { const ok = __J.resolver(); __J.st(60); __J.keys({ R: true }); __J.st(30); __J.keys(); __J.st(150); return { ...__J.info(), ok }; },
+      (r, z) => r.ok && r.ganado && r.misionCompleta, '11_completado'],
   ];
   for (const [n, f, chk, cap] of pasos) {
     let r = await E(f); if (r && r.pie !== undefined) r = { ...r, ...U(r) };
