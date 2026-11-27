@@ -25,7 +25,7 @@ const EXTRA = () => {
   J.resolver = () => { const s = S(), M = s.mini; if (!M) return false;
     if (M.A.tipo === 'sudoku') M.solucionLista().forEach(([i, v]) => { M.elegir(i); M.poner(v); });
     else if (M.A.tipo === 'picross') M.solucionLista().forEach(i => M.tocar(i));
-    else if (M.A.tipo === 'balanza') { for (let r = 0; r < 2 && !M.resuelto; r++) { J.esperar(() => !M.esperando, 200); M.solucionRonda().forEach(i => M.tocar(i)); J.st(80); } }
+    else if (M.A.tipo === 'balanza') { for (let r = 0; r < 4 && !M.resuelto; r++) { J.esperar(() => !M.esperando, 200); M.solucionRonda().forEach(i => M.tocar(i)); J.st(80); } }
     else if (M.A.tipo === 'tangram') M.piezas.forEach(P => { for (let k = 0; k < 4 && !M.poner(P.i); k++) M.girar(P.i); });
     else if (M.A.tipo === 'memoria') M.solucionLista().forEach(i => { M.tocar(i); J.st(15); });
     else if (M.A.tipo === 'laberinto') M.solucion.slice(1).forEach(c => M.paso(c));
@@ -39,6 +39,8 @@ const EXTRA = () => {
   J.pinchoAbajo = (i, margen = 700) => J.esperar(() => { const c = S().pinchos[i].c, T = c.on + c.off, f = (S().time.now + (c.fase || 0) * T) % T; return f < c.off - 500 - margen; }, 400);
   // trepa la escalera: mantiene ↑ hasta arriba y camina hacia dir
   J.trepar = (dir) => { for (let k = 0; k < 400; k++) { J.keys({ J: true }); J.st(1); const s = S(); if (s.enEscalera && s.player.body.bottom <= s.enEscalera.e.y0 * 2 + 1) break; } J.keys(); J.st(5); J.keys(dir > 0 ? { R: true } : { L: true }); J.st(25); J.keys(); J.st(20); return J.est(); };
+  J.montada = (i, cond, max = 900) => { for (let k = 0; k < max; k++) { if (cond()) break; const m = S().moviles[i], cx = (m.o.body.x + m.o.body.width / 2) / 2, x = S().player.body.center.x / 2;
+      J.keys(x < cx - 4 ? { R: true } : x > cx + 4 ? { L: true } : {}); J.st(1); } J.keys(); return J.est(); };
   J.movil = i => { const m = S().moviles[i]; return { x: Math.round(m.o.body.x / 2), top: Math.round(m.o.body.y / 2) }; };
   // pelea con una criatura concreta: se acerca, se aparta de los avisos y golpea cuando puede
   // PÉNDULOS: ¿el camino ruta(ms) → [x, pie] (unidades) choca con el péndulo i si se empieza ahora? (misma cuenta que el juego)
@@ -99,18 +101,27 @@ const EXTRA = () => {
     ['tablones hasta la isla del carrete (abre el Punto de Cruz)', () => { __J.saltarA(175); __J.saltarA(105); __J.saltarA(232); __J.ir(456); __J.st(30); return { ...__J.est(), tipo: __J.S().mini && __J.S().mini.A.tipo }; },
       (r, z) => r.tipo === 'picross' && r.pie === 2310, '03_picross'],
     ['resuelve el Punto de Cruz 8 × 8 del hongo', () => { const ok = __J.resolver(); return { ...__J.est(), ok }; }, (r, z) => r.ok && z.mision[2] === '1'],
-    ['remienda a la ardilla', () => { __J.st(60); return __J.pelear(0, 228); }, (r, z) => z.vivos === '0' && z.mision[1] === '1', '04_ardilla'],
-    ['cose la gran grieta', () => { __J.ir(412); __J.pulsar('T'); __J.st(90); return __J.est(); }, (r, z) => z.enl === '1' && z.mision[3] === '1'],
+    ['remienda a la ardilla', () => { __J.st(60); return __J.pelear(0, 228); }, (r, z) => z.vivos === '01', '04_ardilla'],
+    ['cose la gran grieta', () => { __J.ir(412); __J.pulsar('T'); __J.st(90); return __J.est(); }, (r, z) => z.enl === '1' && z.mision[4] === '1'],
     ['cruza el hilo a la isla E', () => { __J.ir(120); __J.st(20); return __J.est(); }, (r, z) => r.pie === 2300],
     ['escalera de hojas que caen hasta la isla F', () => { __J.ir(110); const tr = [125, 55, 125, 85, 185].map((x, i) => { const e = __J.saltarA(x, i === 4 ? 16 : 14); return Math.round(e.pie / 2); }); __J.st(10); return { ...__J.est(), tr }; },
       (r, z) => r.pie === 2040, '05_escalera_hojas'],
-    ['grulla ascensor hasta la puerta', () => { const s = __J.S(), M = s.moviles[1]; __J.ir(470);
+    ['grulla ascensor hasta la isla G', () => { const s = __J.S(), M = s.moviles[1]; __J.ir(470);
       __J.esperar(() => M.o.body.y / 2 > 2025 - 2 && M.o.body.velocity.y < 0, 900); __J.saltarA(180, 8); const enG = __J.est();
       __J.esperar(() => M.o.body.y / 2 < 1860, 700); __J.saltarA(70, 12); __J.st(10); return { ...__J.est(), w: enG.pie }; },
       (r, z) => r.pie === 1830, '06_ascensor'],
-    ['abre el Laberinto del Bosque 11 × 11 en la puerta', () => { __J.ir(70); __J.st(40); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && M.A.cols }; }, (r, z) => r.tipo === 'laberinto' && r.n === 11, '07_laberinto'],
-    ['resuelve el laberinto y cruza la puerta', () => { const ok = __J.resolver(); __J.st(60); __J.keys({ L: true }); __J.st(30); __J.keys(); __J.st(150); return { ...__J.info(), ok }; },
-      (r, z) => r.ok && r.ganado && r.misionCompleta, '08_completado'],
+    ['tablón y 3 hojas que caen hasta la isla H', () => { __J.ir(290); const tr = [[223, 14], [275, 14], [325, 14], [247, 14], [195, 16]].map(([x, h]) => { const e = __J.saltarA(x, h); return [Math.round(e.x / 2), Math.round(e.pie / 2)]; });
+      __J.st(10); return { ...__J.est(), tr }; }, (r, z) => r.pie === 1605, '07_hojas_altas'],
+    ['al llegar se abre la Balanza del Bosque (3 rondas)', () => { __J.st(30); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && (M.A.rondas || []).length }; }, (r, z) => r.tipo === 'balanza' && r.n === 3, '08_balanza'],
+    ['equilibra las 3 rondas', () => { const ok = __J.resolver(); return { ...__J.est(), ok }; }, (r, z) => r.ok && z.mision[3] === '1'],
+    ['remienda a la 2.ª ardilla', () => { __J.st(20); return __J.pelear(1, 178); }, (r, z) => z.vivos === '00' && z.mision[1] === '2'],
+    ['grulla ascensor hasta la isla de la puerta', () => { const s = __J.S(), M = s.moviles[2]; __J.ir(192);
+      __J.esperar(() => M.o.body.y / 2 > 1597 && M.o.body.velocity.y <= 0, 900); __J.saltarA(53, 8); const enG = __J.est();
+      __J.montada(2, () => M.o.body.y / 2 < 1462); __J.saltarA(120, 10); __J.st(10); return { ...__J.est(), w: Math.round(enG.pie / 2) }; },
+      (r, z) => r.pie === 1450, '09_ascensor2'],
+    ['abre el Laberinto del Bosque 11 × 11 en la puerta', () => { __J.ir(372); __J.st(40); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && M.A.cols }; }, (r, z) => r.tipo === 'laberinto' && r.n === 11, '10_laberinto'],
+    ['resuelve el laberinto y cruza la puerta', () => { const ok = __J.resolver(); __J.st(60); __J.ir(380); __J.st(150); return { ...__J.info(), ok }; },
+      (r, z) => r.ok && r.ganado && r.misionCompleta, '11_completado'],
   ];
   for (const [n, f, chk, cap] of pasos) {
     let r = await E(f); if (r && r.pie !== undefined) r = { ...r, ...U(r) };
