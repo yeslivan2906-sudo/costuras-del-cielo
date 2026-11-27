@@ -123,17 +123,29 @@ const EXTRA = () => {
       const m = __J.S().mini; return { ...__J.est(), tipo: m && m.A.tipo, n: m && m.A.n }; },
       (r, z) => r.pie === 1915 && r.tipo === 'sudoku' && r.n === 6, '07_sudoku'],
     ['resuelve el Sudoku 6 × 6 de 11 pistas', () => { const ok = __J.resolver(); return { ...__J.est(), ok }; }, (r, z) => r.ok && z.mision[3] === '1'],
-    ['remienda a la 2.ª ardilla', () => { __J.st(30); return __J.pelear(1, 262); }, (r, z) => z.vivos === '001'],
+    ['remienda a la 2.ª ardilla', () => { __J.st(30); return __J.pelear(1, 262); }, (r, z) => z.vivos === '0011'],
     ['tablón secreto: el corazón', () => { __J.calma(1500); __J.ir(470); __J.saltarA(190, 14); __J.saltarA(278, 14); __J.st(20); return { ...__J.est(), w: __J.S().collected.heart }; }, (r, z) => r.pie === 1810 && r.w, '08_secreto'],
     ['baja a F y espera a que vuelva la hoja', () => { __J.keys({ L: true }); __J.st(25); __J.keys(); __J.st(10); __J.calma(1500); __J.st(200); return __J.est(); }, (r, z) => r.pie === 1915],
     ['subida final con viento: hojas, tablón y hoja hasta la puerta', () => { __J.ir(470); __J.calma(2300);
       const tr = []; for (const [x, h] of [[190, 14], [120, 14], [45, 14]]) { const e = __J.saltarA(x, h); tr.push([Math.round(e.x / 2), Math.round(e.pie / 2)]); }
       __J.calma(2000); for (const [x, h] of [[115, 14], [172, 16]]) { const e = __J.saltarA(x, h); tr.push([Math.round(e.x / 2), Math.round(e.pie / 2)]); }
       __J.st(10); return { ...__J.est(), tr }; }, (r, z) => r.pie === 1660, '09_subida'],
-    ['remienda a la ardilla que guarda la puerta', () => { __J.st(20); return __J.pelear(2, 172); }, (r, z) => z.vivos === '000' && z.mision[0] === '3'],
-    ['abre los Tubos del Sendero 6 × 6', () => { __J.ir(530); __J.st(40); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && M.A.n }; }, (r, z) => r.tipo === 'tubos' && r.n === 6, '10_tubos'],
-    ['resuelve los tubos y cruza la puerta', () => { const ok = __J.resolver(); __J.st(60); __J.keys({ R: true }); __J.st(30); __J.keys(); __J.st(150); return { ...__J.info(), ok }; },
-      (r, z) => r.ok && r.ganado && r.misionCompleta, '11_completado'],
+    ['remienda a la 3.ª ardilla (isla G)', () => { __J.st(20); return __J.pelear(2, 172); }, (r, z) => z.vivos === '0001'],
+    ['grulla ascensor de la derecha hasta la isla I', () => { const s = __J.S(), M = s.moviles[2]; __J.calma(1200); __J.ir(570);
+      __J.aguanta(285, () => M.o.body.y / 2 > 1655 && M.o.body.velocity.y <= 0, 900); __J.saltarA(328, 8); const enG = __J.est();
+      __J.montada(2, () => M.o.body.y / 2 < 1490); __J.saltarA(255, 12); __J.st(10); return { ...__J.est(), w: Math.round(enG.pie / 2) }; },
+      (r, z) => r.pie === 1440, '10_ascensor2'],
+    ['zigzag final con viento: hojas, tablón y hojas hasta la isla J', () => { __J.calma(1200); __J.ir(360); __J.calma(2300);
+      const tr = []; for (const [x, h] of [[135, 14], [65, 14], [135, 14]]) { const e = __J.saltarA(x, h); tr.push([Math.round(e.x / 2), Math.round(e.pie / 2)]); }
+      __J.calma(2000); for (const [x, h] of [[65, 14], [135, 14], [195, 16]]) { const e = __J.saltarA(x, h); tr.push([Math.round(e.x / 2), Math.round(e.pie / 2)]); }
+      __J.st(10); return { ...__J.est(), tr }; }, (r, z) => r.pie === 1145, '11_zigzag'],
+    ['remienda a la ardilla que guarda la puerta', () => { __J.st(20); return __J.pelear(3, 195); }, (r, z) => z.vivos === '0000' && z.mision[0] === '4'],
+    ['abre los Tubos del Sendero 6 × 6', () => { __J.ir(610); __J.st(40); const M = __J.S().mini; return { ...__J.est(), tipo: M && M.A.tipo, n: M && M.A.n }; }, (r, z) => r.tipo === 'tubos' && r.n === 6, '12_tubos'],
+    ['resuelve los tubos: la puerta mágica brilla', () => { const ok = __J.resolver(); __J.ir(560); __J.st(30); return { ...__J.est(), ok, w: __J.S().door.texture.key }; },
+      (r, z) => r.ok && r.w === 'a/puertas/brilla', '13_puerta_brilla'],
+    ['cruza: la puerta se abre con su animación', () => { __J.keys({ R: true }); __J.st(45); __J.keys(); return { ...__J.info(), w: __J.S().door.texture.key }; },
+      (r, z) => /a\/puertas\/(abre|abierta)/.test(r.w), '14_puerta_abriendo'],
+    ['nivel completado', () => { __J.st(150); return { ...__J.info(), w: __J.S().door.texture.key }; }, (r, z) => r.ganado && r.misionCompleta && r.w === 'a/puertas/abierta', '15_completado'],
   ];
   for (const [n, f, chk, cap] of pasos) {
     let r = await E(f); if (r && r.pie !== undefined) r = { ...r, ...U(r) };
